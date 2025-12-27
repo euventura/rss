@@ -31,5 +31,5 @@ jobs:
           username: ${{ secrets.DO_USERNAME }}
           key: ${{ secrets.DO_SSH_KEY }}
           port: ${{ secrets.DO_PORT }}
-          source: "rss,sources.txt"
+          source: "rss,sources.txt, templates/"
           target: "${{ secrets.DO_PATH }}"
