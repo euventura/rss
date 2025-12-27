@@ -60,16 +60,30 @@ func newFeed() *Feed {
 
 func main() {
 
+	ePath, _ := os.Executable()
+	eDir := strings.TrimSuffix(ePath, "/rss")
+	err := godotenv.Load(eDir + "/.env")
+
+	if err != nil {
+		err2 := godotenv.Load(dir() + "/.env")
+		if err2 != nil {
+			log.Fatalf("Error loading .env file: %s", err2)
+		}
+	}
+
 	args := os.Args[1:]
-	fmt.Println("start")
-	fmt.Println(len(args))
 
 	if len(args) > 0 && len(args[0]) > 10 && args[0][:8] == "https://" {
+		fmt.Println("adding Source...")
 		addSource(args[0])
+		fmt.Println("Done!")
+
 		return
 	}
 
 	f := newFeed()
+	fmt.Println("Fetching feeds...")
+
 	f.fetch()
 	fmt.Println("Success")
 
@@ -265,10 +279,6 @@ func addSource(toAdd string) {
 		return
 	}
 
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("Error loading .env file: %s", err)
-	}
 	ghKey := os.Getenv("GH_KEY")
 	gistID := os.Getenv("GIST_ID")
 
