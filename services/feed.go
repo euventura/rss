@@ -9,6 +9,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gosimple/slug"
@@ -40,7 +41,7 @@ type Entry struct {
 
 var artPath = "/template/article.html"
 var hePath = "/template/headline.html"
-var stPath = "/../static/"
+var stPath = "../static/editions/"
 
 func newFeed() *Feed {
 	return &Feed{
@@ -73,66 +74,60 @@ func (f *Feed) loadSources() {
 		return
 	}
 
-	r2, _ := NewR2()
-
-	content, _ := r2.Get("sources.txt")
-
-	for _, line := range strings.Split(content, "\n") {
-		if line != "" {
-			star := false
-			lastChar := line[len(line)-1:]
-			if lastChar == "*" {
-				line = line[:len(line)-1]
-				star = true
-			}
-			source := Source{
-				URL:  line,
-				Star: star,
-			}
-			f.Sources = append(f.Sources, source)
-		}
-
-	}
 }
 
 func (f *Feed) fetch() {
 	f.loadSources()
+	nPath := stPath + time.Now().Format("02012006")
+	err := os.MkdirAll(nPath, os.ModePerm)
+	if err != nil {
+		fmt.Println("Erro ao criar diretório:", err)
+		return
+	}
+
+	fp := gofeed.NewParser()
+	ch := make(chan string)
+	wg := sync.WaitGroup{}
 
 	for _, source := range f.Sources {
-		fmt.Println("Source:", source.URL, "Starred:", source.Star)
-		fp := gofeed.NewParser()
-		fp.UserAgent = "CloudFair 0.1"
 
-		feed, _ := fp.ParseURL(source.URL)
-		f.process(feed, source.Star)
+		fp.UserAgent = "CloudFair 0.1"
+		feed, err := fp.ParseURL(source.URL)
+
+		if err != nil {
+			fmt.Println("Erro ao buscar feed:", err)
+			continue
+		}
+		wg.Add(1)
+		go f.process(feed, source.Star, nPath, ch, &wg)
 	}
+
+	go func() {
+		wg.Wait()
+		close(ch)
+	}()
+
+	var index string
+
+	for result := range ch {
+		index += result
+	}
+
+	os.WriteFile(nPath+"/index.html", []byte(index), 0644)
 }
 
 func dir() string {
 	dir, _ := os.Getwd()
-	fmt.Println(dir)
 	return dir
 }
 
-func (f *Feed) process(gof *gofeed.Feed, star bool) {
-
-	wPath := dir() + stPath + time.Now().Format("02012006") + "/"
-	err := os.MkdirAll(wPath, os.ModePerm)
-
+func (f *Feed) process(gof *gofeed.Feed, star bool, wPath string, ch chan<- string, wg *sync.WaitGroup) {
 	var headline string
 	var fiName string
-	fmt.Println("Processing feed:", gof.Title)
-	fmt.Println("Items: ", len(gof.Items))
+	defer wg.Done()
 
 	for _, item := range gof.Items {
 
-		// if item.PublishedParsed.Format("02012006") != time.Now().Format("02012006") {
-		// 	fmt.Println(item.PublishedParsed.Format("02/01/2006"))
-		// 	continue
-		// }
-
-		//
-		//Url := time.Now().Format("02-01-2006") + "/" + gof.Title + ".html"
 		author := item.Authors[0].Name
 
 		if author == "" {
@@ -147,11 +142,13 @@ func (f *Feed) process(gof *gofeed.Feed, star bool) {
 
 		class := slug.Make(author)
 
+		url := "/editions/" + time.Now().Format("02012006") + "/" + slug.Make(item.Title) + ".html"
+
 		data := Entry{
 			Star:        star,
 			Title:       item.Title,
 			Link:        item.Link,
-			Url:         item.Link,
+			Url:         url,
 			Author:      author,
 			Content:     template.HTML(item.Content),
 			Date:        *item.PublishedParsed,
@@ -160,31 +157,16 @@ func (f *Feed) process(gof *gofeed.Feed, star bool) {
 			ID:          slug.Make(item.Title),
 		}
 		fiName = slug.Make(item.Title) + ".html"
-		fmt.Println(fiName)
 		article := f.make(data, dir()+artPath)
-		err = os.WriteFile(wPath+"/"+fiName, []byte(article), 0644)
+		err := os.WriteFile(wPath+"/"+fiName, []byte(article), 0644)
 		if err != nil {
 			fmt.Println("Erro ao escrever arquivo:", err)
 			return
 		}
-
 		headline += f.make(data, dir()+hePath)
-
 	}
 
-	hFi, err := os.OpenFile(wPath+"/index.html", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
-
-	if err != nil {
-		fmt.Println("Erro ao abrir arquivo de índice:", err)
-		return
-	}
-	defer hFi.Close()
-
-	if _, err := hFi.WriteString(headline); err != nil {
-		fmt.Println("Erro ao escrever no headline de índice:", err)
-		return
-	}
-
+	ch <- headline
 }
 
 func (f *Feed) make(data Entry, templatePath string) string {

@@ -1,12 +1,20 @@
 package services
 
-import "testing"
+import (
+	"os"
+	"testing"
+	"time"
+)
 
 func TestFetch(t *testing.T) {
 
 	f := newFeed()
 	f.fetch()
 
-	t.Fail()
+	_, err := os.ReadFile(dir() + "/" + stPath + time.Now().Format("02012006") + "/index.html")
+
+	if err != nil {
+		t.Errorf("Erro ao ler o arquivo index.html: %v", err)
+	}
 
 }

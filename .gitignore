@@ -27,4 +27,4 @@ go.work
 *~
 .DS_Store
 sources.txt
-/static/
+/static/editions
