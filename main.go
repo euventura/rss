@@ -218,13 +218,18 @@ func (f *Feed) makeMenu() {
 	e := Entry{}
 
 	for _, d := range di {
-		e.Menu = append(e.Menu, d.Name())
+		if (d.IsDir()) && (len(d.Name()) == 8) {
+			{
+				e.Menu = append(e.Menu, d.Name())
+				continue
+			}
+		}
 	}
 	mePAthC := dir() + mePath
 
 	cont := f.make(e, mePAthC)
 
-	wPath := stPath + time.Now().Format("02012006") + "/menu.html"
+	wPath := stPath + "/menu.html"
 	err = os.WriteFile(wPath, []byte(cont), 0644)
 
 }

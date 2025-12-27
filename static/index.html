@@ -187,40 +187,19 @@
         }
     </style>
     <title>Feed Rss</title>
-
 </head>
 
 <body>
-
     <header id="header">
-
     </header>
     <div id="main">
-
-
     </div>
-
-
 </body>
 
 </html>
-
 <script>
-
-    for (let i = 0; i < document.getElementsByTagName("a").length; i++) {
-        document.getElementsByTagName("a")[i].onclick = function () {
-            fetch(this.href)
-                .then(response => response.text())
-                .then(data => {
-                    console.log(data)
-                    document.getElementById("main").innerHTML = "<section id='feed'>" + data + "</section>";
-                })
-            return false;
-        }
-    }
-
-    document.onload = function () {
-        fetch("menu.html")
+    function loadHeader() {
+        fetch("editions/menu.html")
             .then(response => response.text())
             .then(data => {
                 console.log(data)
@@ -228,8 +207,27 @@
 
             }).finally(() => {
 
+                for (let i = 0; i < document.getElementsByTagName("a").length; i++) {
+                    document.getElementsByTagName("a")[i].onclick = function () {
+                        fetch(this.href)
+                            .then(response => response.text())
+                            .then(data => {
+                                console.log(data)
+                                document.getElementById("main").innerHTML = "<section id='feed'>" + data + "</section>";
+                            })
+                        return false;
+                    }
+                }
+
                 document.getElementById("o-0").click();
             })
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadHeader()
+    });
+
+
+
 
 </script>

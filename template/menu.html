@@ -1,7 +1,7 @@
 <nav>
     <ul>
         {{ range $i, $l := .Menu }}
-        <li><a href="editions/{{ $l }}" id="o-{{$i}}">{{ $l }}</a></li>
+        <li><a href="editions/{{ $l }}" id="o-{{$i}}">{{ slice $l 0 2 }}.{{ slice $l 2 4 }}.{{ slice $l 4 8 }}</a></li>
         {{ end }}
     </ul>
 </nav>
