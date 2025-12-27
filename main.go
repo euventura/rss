@@ -140,7 +140,7 @@ func (f *Feed) fetch() {
 
 	for _, source := range f.Sources {
 		fmt.Println("Start: " + source.URL)
-		fp.UserAgent = "CloudFair 0.1"
+		fp.UserAgent = "Euventura Rss 0.1"
 		feed, err := fp.ParseURL(source.URL)
 
 		if err != nil {
@@ -180,6 +180,10 @@ func (f *Feed) process(gof *gofeed.Feed, star bool, wPath string, ch chan<- stri
 	defer wg.Done()
 	fmt.Printf("Items: %d", len(gof.Items))
 	for _, item := range gof.Items {
+
+		if item.PublishedParsed.Format("02012006") != time.Now().AddDate(0, 0, -1).Format("02012006") {
+			continue
+		}
 
 		author := item.Authors[0].Name
 

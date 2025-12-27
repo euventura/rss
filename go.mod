@@ -1,4 +1,4 @@
-module github.com/euventura/cloud-fair-rss
+module github.com/euventura/rss
 
 go 1.25.5
 
