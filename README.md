@@ -1,4 +1,4 @@
-# Cloud Fair RSS
+# ACid Rss
 
 ## Because You Needed Another RSS Reader, Obviously
 
