@@ -47,11 +47,12 @@ type Entry struct {
 var artPath = "/template/article.html"
 var hePath = "/template/headline.html"
 var mePath = "/template/menu.html"
+var indPath = "/template/index.html"
 var stPath = "./docs/editions/"
 
 func newFeed() *Feed {
 	return &Feed{
-		Title:   "RSS Zombie",
+		Title:   "RSS",
 		Sources: []Source{},
 	}
 
@@ -105,16 +106,29 @@ func loadGist() string {
 	return string(body)
 }
 func (f *Feed) loadSources() {
-	body := loadGist()
-	sources := strings.Split(body, "\n")
+	// Read sources from local file in project root
+	path := dir() + "/sources.txt"
+	data, err := os.ReadFile(path)
+	if err != nil {
+		fmt.Println("Erro ao ler sources.txt:", err)
+		return
+	}
 
-	for _, line := range sources {
+	sources := strings.Split(string(data), "\n")
+
+	for _, raw := range sources {
+		line := strings.TrimSpace(raw)
+		if line == "" {
+			continue
+		}
+
 		star := false
 		lastChar := line[len(line)-1:]
 		if lastChar == "*" {
 			line = line[:len(line)-1]
 			star = true
 		}
+
 		source := Source{
 			URL:  line,
 			Star: star,
@@ -164,7 +178,8 @@ func (f *Feed) fetch() {
 	}
 
 	fmt.Printf("Writing Index.html: %d\n", len(index))
-	os.WriteFile(nPath+"/index.html", []byte(index), 0644)
+	indTpl := f.make(Entry{Content: template.HTML(index)}, dir()+indPath)
+	os.WriteFile(nPath+"/index.html", []byte(indTpl), 0644)
 	f.makeMenu()
 }
 
@@ -204,7 +219,7 @@ func (f *Feed) process(gof *gofeed.Feed, star bool, wPath string, ch chan<- stri
 		words := strings.Fields(desc)
 
 		class := slug.Make(author)
-		back := "/editions/" + time.Now().Format("02012006") + "/"
+		back := "/rss/editions/" + time.Now().Format("02012006") + "/"
 		url := back + slug.Make(item.Title) + ".html"
 
 		data := Entry{
@@ -220,8 +235,10 @@ func (f *Feed) process(gof *gofeed.Feed, star bool, wPath string, ch chan<- stri
 			ID:          slug.Make(item.Title),
 			Back:        back + "index.html",
 		}
+
 		fiName = slug.Make(item.Title) + ".html"
 		article := f.make(data, dir()+artPath)
+		article = f.make(Entry{Content: template.HTML(article)}, dir()+indPath)
 		err := os.WriteFile(wPath+"/"+fiName, []byte(article), 0644)
 		if err != nil {
 			fmt.Println("Erro ao escrever arquivo:", err)
@@ -279,60 +296,4 @@ func (f *Feed) makeMenu() {
 	wPath := stPath + "/menu.html"
 	err = os.WriteFile(wPath, []byte(cont), 0644)
 
-}
-
-func addSource(toAdd string) {
-
-	if toAdd == "" {
-		return
-	}
-
-	ghKey := os.Getenv("GH_KEY")
-	gistID := os.Getenv("GIST_ID")
-
-	if ghKey == "" {
-		fmt.Println("GH_KEY not set")
-		return
-	}
-
-	if gistID == "" {
-		fmt.Println("GIST_ID not set")
-		return
-	}
-
-	gist := loadGist()
-	gist += "\n" + toAdd
-
-	// Criar o JSON para atualizar o gist
-	jsonData := fmt.Sprintf(`{"files":{"sources.txt":{"content":%q}}}`, gist)
-
-	// Criar o request PATCH
-	client := &http.Client{}
-	req, err := http.NewRequest("PATCH", "https://api.github.com/gists/"+gistID, strings.NewReader(jsonData))
-	if err != nil {
-		fmt.Println("Erro ao criar request:", err)
-		return
-	}
-
-	// Adicionar headers de autenticação
-	req.Header.Set("Authorization", "Bearer "+ghKey)
-	req.Header.Set("Accept", "application/vnd.github+json")
-	req.Header.Set("Content-Type", "application/json")
-
-	// Executar o request
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println("Erro ao atualizar gist:", err)
-		return
-	}
-	defer resp.Body.Close()
-
-	fmt.Println("Status:", resp.Status)
-
-	if resp.StatusCode == 200 {
-		fmt.Println("Source adicionado com sucesso!")
-	} else {
-		body, _ := io.ReadAll(resp.Body)
-		fmt.Println("Erro:", string(body))
-	}
 }

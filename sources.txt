@@ -1,0 +1,2 @@
+https://bearblog.dev/discover/feed/?type=rss
+https://bearblog.dev/discover/feed/?lang=pt&newest=True*
