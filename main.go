@@ -47,8 +47,7 @@ type Entry struct {
 var artPath = "/template/article.html"
 var hePath = "/template/headline.html"
 var mePath = "/template/menu.html"
-
-var stPath = "./static/editions/"
+var stPath = "./docs/editions/"
 
 func newFeed() *Feed {
 	return &Feed{
