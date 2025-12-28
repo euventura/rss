@@ -72,23 +72,4 @@
     </footer>
 </body>
 
-<script>
-    function loadHeader() {
-        fetch("/rss/editions/menu.html")
-            .then(response => response.text())
-            .then(data => {
-                console.log(data)
-                document.getElementById("header").innerHTML = data;
-
-            }).finally(() => {
-
-                reloadABehavior()
-                document.getElementById("o-0").click();
-            })
-    }
-    document.addEventListener('DOMContentLoaded', function () {
-        loadHeader()
-    });
-</script>
-
 </html>

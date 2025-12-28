@@ -196,12 +196,18 @@ func (f *Feed) process(gof *gofeed.Feed, star bool, wPath string, ch chan<- stri
 
 		fmt.Println("Author", author)
 
+		// Prefer full content; fall back to description when content is empty
+		contentHTML := item.Content
+		if contentHTML == "" {
+			contentHTML = item.Description
+		}
+
 		const regex = `<.*?>`
 		r := regexp.MustCompile(regex)
 		desc := r.ReplaceAllString(item.Description, "")
 
 		if desc == "" {
-			desc = r.ReplaceAllString(item.Content, "")
+			desc = r.ReplaceAllString(contentHTML, "")
 		}
 
 		words := strings.Fields(desc)
@@ -216,7 +222,7 @@ func (f *Feed) process(gof *gofeed.Feed, star bool, wPath string, ch chan<- stri
 			Link:        item.Link,
 			Url:         url,
 			Author:      author,
-			Content:     template.HTML(item.Content),
+			Content:     template.HTML(contentHTML),
 			Date:        *item.PublishedParsed,
 			Description: strings.Join(words[0:min(38, len(words))], " "),
 			Class:       class,
