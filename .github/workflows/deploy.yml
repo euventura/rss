@@ -1,4 +1,4 @@
-name: Deploy to Digital Ocean
+name: Deploy to GitHub Pages
 
 on:
   push:
@@ -7,8 +7,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  deploy-pages:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     
     steps:
       - name: Checkout code
@@ -22,15 +26,19 @@ jobs:
       - name: Build application
         run: |
           go mod download
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o rss main.go
+          go build -o rss main.go
       
-      - name: Deploy to Digital Ocean
-        uses: appleboy/scp-action@master
+      - name: Run application to generate docs
+        run: ./rss
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          host: ${{ secrets.DO_HOST }}
-          username: ${{ secrets.DO_USERNAME }}
-          key: ${{ secrets.DO_SSH_KEY }}
-          port: ${{ secrets.DO_PORT }}
-          source: "rss,template,static"
-          target: "${{ secrets.DO_PATH }}"
-          overwrite: true
+          path: 'docs'
+      
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

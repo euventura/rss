@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Young+Serif&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/rss/css/style.css">
+    <title>daily digest</title>
+</head>
+
+<body>
+    <header id="header">
+        <nav>
+            <ul>
+                <li>
+                    <h1><a href="/rss/index.html">daily digest</a></h1>
+                </li>
+                <li>
+                    <a href="/rss/y/index.html">yesterday</a>
+                </li>
+            </ul>
+        </nav>
+    </header>
+    <div id="main">
+        {{ .Content }}
+    </div>
+    <footer>
+        daily digest by <a href="https://harmonista.org" target="_blank">harmonista ⌐◯ᵔ◯</a>
+    </footer>
+</body>
+
+</html>
