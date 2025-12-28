@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
-	"io"
-	"net/http"
 	"net/url"
 	"os"
 	"regexp"
@@ -38,15 +36,40 @@ type Entry struct {
 	Date        time.Time
 	Class       string
 	ID          string
-	Menu        []string
 	Back        string
 }
 
 var artPath = "/template/article.html"
 var hePath = "/template/headline.html"
-var mePath = "/template/menu.html"
 var indPath = "/template/index.html"
-var stPath = "./docs/editions/"
+var setupOnce sync.Once
+
+func prepareDocs() {
+	_ = os.MkdirAll("./docs", os.ModePerm)
+
+	_ = os.RemoveAll("./docs/y")
+	_ = os.MkdirAll("./docs/y", os.ModePerm)
+
+	entries, err := os.ReadDir("./docs")
+	if err != nil {
+		return
+	}
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		name := e.Name()
+		if strings.HasSuffix(strings.ToLower(name), ".html") {
+			srcPath := "./docs/" + name
+			dstPath := "./docs/y/" + name
+			b, err := os.ReadFile(srcPath)
+			if err != nil {
+				continue
+			}
+			_ = os.WriteFile(dstPath, b, 0644)
+		}
+	}
+}
 
 func newFeed() *Feed {
 	return &Feed{
@@ -66,24 +89,8 @@ func main() {
 
 }
 
-func loadGist() string {
-	r, err := http.Get("https://gist.github.com/" + os.Getenv("GH_USER") + "/" + os.Getenv("GIST_ID") + "/raw")
-	if err != nil {
-		fmt.Println("Erro ao ler gist:", err)
-		return ""
-	}
-	defer r.Body.Close()
-
-	body, err := io.ReadAll(r.Body)
-
-	if err != nil {
-		fmt.Println("Erro ao ler gist:", err)
-		return ""
-	}
-	return string(body)
-}
 func (f *Feed) loadSources() {
-	// Read sources from local file in project root
+
 	path := dir() + "/sources.txt"
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -117,9 +124,11 @@ func (f *Feed) loadSources() {
 
 func (f *Feed) fetch() {
 	f.loadSources()
-	nPath := stPath + time.Now().Format("02012006")
-	err := os.MkdirAll(nPath, os.ModePerm)
-	if err != nil {
+
+	setupOnce.Do(prepareDocs)
+
+	outDir := "./docs"
+	if err := os.MkdirAll(outDir, os.ModePerm); err != nil {
 		fmt.Println("Erro ao criar diretório:", err)
 		return
 	}
@@ -138,7 +147,7 @@ func (f *Feed) fetch() {
 			continue
 		}
 		wg.Add(1)
-		go f.process(feed, source.Star, nPath, ch, &wg)
+		go f.process(feed, source.Star, outDir, ch, &wg)
 	}
 
 	// Aguarda todas as goroutines terminarem e fecha o canal
@@ -156,8 +165,7 @@ func (f *Feed) fetch() {
 
 	fmt.Printf("Writing Index.html: %d\n", len(index))
 	indTpl := f.make(Entry{Content: template.HTML(index)}, dir()+indPath)
-	os.WriteFile(nPath+"/index.html", []byte(indTpl), 0644)
-	f.makeMenu()
+	os.WriteFile(outDir+"/index.html", []byte(indTpl), 0644)
 }
 
 func dir() string {
@@ -169,6 +177,9 @@ func (f *Feed) process(gof *gofeed.Feed, star bool, wPath string, ch chan<- stri
 	var headline string
 	var fiName string
 	defer wg.Done()
+
+	setupOnce.Do(prepareDocs)
+
 	fmt.Printf("Items: %d", len(gof.Items))
 	for _, item := range gof.Items {
 
@@ -196,7 +207,7 @@ func (f *Feed) process(gof *gofeed.Feed, star bool, wPath string, ch chan<- stri
 		words := strings.Fields(desc)
 
 		class := slug.Make(author)
-		back := "/rss/editions/" + time.Now().Format("02012006") + "/"
+		back := "/rss/"
 		url := back + slug.Make(item.Title) + ".html"
 
 		data := Entry{
@@ -216,7 +227,8 @@ func (f *Feed) process(gof *gofeed.Feed, star bool, wPath string, ch chan<- stri
 		fiName = slug.Make(item.Title) + ".html"
 		article := f.make(data, dir()+artPath)
 		article = f.make(Entry{Content: template.HTML(article)}, dir()+indPath)
-		err := os.WriteFile(wPath+"/"+fiName, []byte(article), 0644)
+		// Always write to ./docs per new flow
+		err := os.WriteFile("./docs/"+fiName, []byte(article), 0644)
 		if err != nil {
 			fmt.Println("Erro ao escrever arquivo:", err)
 			return
@@ -246,31 +258,4 @@ func (f *Feed) make(data Entry, templatePath string) string {
 	}
 
 	return buf.String()
-}
-
-func (f *Feed) makeMenu() {
-	di, err := os.ReadDir(stPath)
-
-	if err != nil {
-		fmt.Println("Erro ao ler diretório:", err)
-		return
-	}
-
-	e := Entry{}
-
-	for _, d := range di {
-		if (d.IsDir()) && (len(d.Name()) == 8) {
-			{
-				e.Menu = append(e.Menu, d.Name())
-				continue
-			}
-		}
-	}
-	mePAthC := dir() + mePath
-
-	cont := f.make(e, mePAthC)
-
-	wPath := stPath + "/menu.html"
-	err = os.WriteFile(wPath, []byte(cont), 0644)
-
 }
