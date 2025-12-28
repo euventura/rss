@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Young+Serif&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/rss/css/style.css">
+    <title>daily digest</title>
+</head>
+
+<body>
+    <header id="header">
+        <nav>
+            <ul>
+                <li>
+                    <h1><a href="/rss/index.html">daily digest</a></h1>
+                </li>
+                <li>
+                    <h1><a href="/y/index.html">yesterday</a></h1>
+                </li>
+            </ul>
+        </nav>
+    </header>
+    <div id="main">
+        <article>
+    <a href="/rss/index.html">Voltar</a>
+    <h2> What I&#39;ve been up to</h2>
+    <div class="meta">
+        <span class="author">kami.bearblog.dev</span>
+        <span class="date">26.12.2025 23:06</span>
+
+    </div>
+    
+</article>
+    </div>
+    <footer>
+        daily digest by <a href="https://harmonista.org" target="_blank">harmonista ⌐◯ᵔ◯</a>
+    </footer>
+</body>
+
+<script>
+    function loadHeader() {
+        fetch("/rss/editions/menu.html")
+            .then(response => response.text())
+            .then(data => {
+                console.log(data)
+                document.getElementById("header").innerHTML = data;
+
+            }).finally(() => {
+
+                reloadABehavior()
+                document.getElementById("o-0").click();
+            })
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        loadHeader()
+    });
+</script>
+
+</html>
