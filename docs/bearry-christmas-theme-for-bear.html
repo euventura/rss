@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Young+Serif&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <title>daily digest</title>
+</head>
+
+<body>
+    <header id="header">
+        <nav>
+            <ul>
+                <li>
+                    <h1><a href="index.html">daily digest</a></h1>
+                </li>
+            </ul>
+        </nav>
+    </header>
+    <div id="main">
+        <article>
+    <a href="/">Voltar</a>
+    <h2> Bearry Christmas theme for Bear</h2>
+    <div class="meta">
+        <span class="author">robertbirming.com</span>
+        <span class="date">23.12.2025 16:45</span>
+
+    </div>
+    <p><img src="https://bear-images.sfo2.cdn.digitaloceanspaces.com/robert/bearry-christmas-theme.webp" alt="Bearry Christmas theme" /></p>
+<p>Here in Sweden, we celebrate Christmas tomorrow. I’ve been busy preparing for that. Not with cooking or buying gifts, but by creating a Christmas theme for anyone who wants to spice up their blog for a day or two.</p>
+<p>I made it as an all-in-one, extra-everything add-on for the <a href="https://robertbirming.com/bearming/">Bearming theme</a>. A lot of it works nicely with other themes too. It includes falling snow, a sparkling title, glowing links, a present upvote button, a light strip, and a bunch of other small festive touches.</p>
+<blockquote>
+<p>Last Christmas, I gave you my data<br />
+The very next day, ads came to stay<br />
+This year, no cookies, no fear<br />
+It’s a joy to share, I’m using Bear</p>
+</blockquote>
+<p>I also made a Bearming color palette to go with the add-on, just to give your theme a little Christmas vibe. If you’re curious about how the different elements look, check out the <a href="https://robertbirming.com/bearming/style-guide/">style guide</a>. Or you can simply grab the gear and get started:</p>
+<ul>
+<li><a href="https://robertbirming.com/bearming/add-ons/#bearry-christmas">Add-on: Bearry Christmas</a></li>
+<li><a href="https://robertbirming.com/bearming/palettes/#bearry-christmas">Palette: Bearry Christmas</a></li>
+</ul>
+<p>The jingle cursor trail needs a small script. Just copy and paste it into the header or footer directive in your Bear settings:</p>
+<pre><code class="language-html">&lt;script&gt;
+(function () {
+  const reduceMotion = window.matchMedia(&quot;(prefers-reduced-motion: reduce)&quot;);
+  if (reduceMotion.matches) return;
+
+  const darkMQ = window.matchMedia(&quot;(prefers-color-scheme: dark)&quot;);
+  const isDark = () =&gt; darkMQ.matches;
+
+  const EMOJIS = [&quot;✨&quot;, &quot;⭐️&quot;];
+  let lastSpark = 0;
+
+  function spawnSparkle(x, y) {
+    const s = document.createElement(&quot;span&quot;);
+    s.className = &quot;bearry-sparkle is-on&quot;;
+    s.textContent = EMOJIS[(Math.random() * EMOJIS.length) | 0];
+
+    const scale = 0.9 + Math.random() * 0.2;
+    s.style.transform = `translate(-50%, -50%) scale(${scale})`;
+    s.style.left = x + &quot;px&quot;;
+    s.style.top = y + &quot;px&quot;;
+    s.style.opacity = isDark() ? &quot;0.85&quot; : &quot;0.5&quot;;
+
+    document.body.appendChild(s);
+    setTimeout(() =&gt; s.remove(), 800);
+  }
+
+  function onMouseMove(e) {
+    const now = performance.now();
+    if (now - lastSpark &lt; 55) return;
+    lastSpark = now;
+    spawnSparkle(e.clientX, e.clientY);
+  }
+
+  window.addEventListener(&quot;mousemove&quot;, onMouseMove);
+})();
+&lt;/script&gt;
+</code></pre>
+<p>Happy blogging, and Merry Christmas! 🎅</p>
+</article>
+    </div>
+    <footer>
+        daily digest by <a href="https://harmonista.org" target="_blank">harmonista ⌐◯ᵔ◯</a>
+    </footer>
+</body>
+
+</html>

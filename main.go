@@ -39,9 +39,9 @@ type Entry struct {
 	Back        string
 }
 
-var artPath = "/template/article.html"
-var hePath = "/template/headline.html"
-var indPath = "/template/index.html"
+var artPath = "./template/article.html"
+var hePath = "./template/headline.html"
+var indPath = "./template/index.html"
 var setupOnce sync.Once
 
 func prepareDocs() {
@@ -84,7 +84,7 @@ func main() {
 
 func (f *Feed) loadSources() {
 
-	path := dir() + "/sources.txt"
+	path := "./sources.txt"
 	data, err := os.ReadFile(path)
 	if err != nil {
 		fmt.Println("Erro ao ler sources.txt:", err)
@@ -126,24 +126,15 @@ func (f *Feed) fetch() {
 		return
 	}
 
-	fp := gofeed.NewParser()
-	ch := make(chan string, len(f.Sources)) // Buffer para evitar deadlock
+	ch := make(chan string, len(f.Sources))
 	wg := sync.WaitGroup{}
 
 	for _, source := range f.Sources {
 		fmt.Println("Start: " + source.URL)
-		fp.UserAgent = "Euventura Rss 0.1"
-		feed, err := fp.ParseURL(source.URL)
-
-		if err != nil {
-			fmt.Println("Erro ao buscar feed:", err)
-			continue
-		}
 		wg.Add(1)
-		go f.process(feed, source.Star, outDir, ch, &wg)
+		go f.process(source, outDir, ch, &wg)
 	}
 
-	// Aguarda todas as goroutines terminarem e fecha o canal
 	go func() {
 		wg.Wait()
 		close(ch)
@@ -151,22 +142,25 @@ func (f *Feed) fetch() {
 
 	var index string
 
-	// Aguarda todos os resultados do canal
 	for result := range ch {
 		index += result
 	}
 
 	fmt.Printf("Writing Index.html: %d\n", len(index))
-	indTpl := f.make(Entry{Content: template.HTML(index)}, dir()+indPath)
+	indTpl := f.make(Entry{Content: template.HTML(index)}, indPath)
 	os.WriteFile(outDir+"/index.html", []byte(indTpl), 0644)
 }
 
-func dir() string {
-	dir, _ := os.Getwd()
-	return dir
-}
+func (f *Feed) process(source Source, wPath string, ch chan<- string, wg *sync.WaitGroup) {
 
-func (f *Feed) process(gof *gofeed.Feed, star bool, wPath string, ch chan<- string, wg *sync.WaitGroup) {
+	fp := gofeed.NewParser()
+	gof, err := fp.ParseURL(source.URL)
+
+	if err != nil {
+		fmt.Println("Erro ao buscar feed:", err)
+		return
+	}
+
 	var headline string
 	var fiName string
 	defer wg.Done()
@@ -175,10 +169,6 @@ func (f *Feed) process(gof *gofeed.Feed, star bool, wPath string, ch chan<- stri
 
 	fmt.Printf("Items: %d", len(gof.Items))
 	for _, item := range gof.Items {
-
-		if item.PublishedParsed.Format("02012006") != time.Now().AddDate(0, 0, -1).Format("02012006") {
-			continue
-		}
 
 		author := item.Authors[0].Name
 
@@ -189,7 +179,6 @@ func (f *Feed) process(gof *gofeed.Feed, star bool, wPath string, ch chan<- stri
 
 		fmt.Println("Author", author)
 
-		// Prefer full content; fall back to description when content is empty
 		contentHTML := item.Content
 		if contentHTML == "" {
 			contentHTML = item.Description
@@ -206,11 +195,11 @@ func (f *Feed) process(gof *gofeed.Feed, star bool, wPath string, ch chan<- stri
 		words := strings.Fields(desc)
 
 		class := slug.Make(author)
-		back := "/rss/"
-		url := back + slug.Make(item.Title) + ".html"
+
+		url := slug.Make(item.Title) + ".html"
 
 		data := Entry{
-			Star:        star,
+			Star:        source.Star,
 			Title:       item.Title,
 			Link:        item.Link,
 			Url:         url,
@@ -220,12 +209,12 @@ func (f *Feed) process(gof *gofeed.Feed, star bool, wPath string, ch chan<- stri
 			Description: strings.Join(words[0:min(38, len(words))], " "),
 			Class:       class,
 			ID:          slug.Make(item.Title),
-			Back:        back + "index.html",
+			Back:        "/",
 		}
 
 		fiName = slug.Make(item.Title) + ".html"
-		article := f.make(data, dir()+artPath)
-		article = f.make(Entry{Content: template.HTML(article)}, dir()+indPath)
+		article := f.make(data, artPath)
+		article = f.make(Entry{Content: template.HTML(article)}, indPath)
 		// Always write to ./docs per new flow
 		err := os.WriteFile("./docs/"+fiName, []byte(article), 0644)
 		if err != nil {
@@ -233,7 +222,7 @@ func (f *Feed) process(gof *gofeed.Feed, star bool, wPath string, ch chan<- stri
 			return
 		}
 		fmt.Println("Written:", fiName)
-		headline += f.make(data, dir()+hePath)
+		headline += f.make(data, hePath)
 	}
 
 	ch <- headline

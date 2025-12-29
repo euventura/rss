@@ -95,7 +95,8 @@ body>header p {
 }
 
 main {
-    padding-top: 1.5rem
+    padding-top: 1.5rem;
+
 }
 
 body>footer {
@@ -812,6 +813,7 @@ article.star {
     /* order: -1; */
 }
 
+/* 
 article.star h4 {
     font-size: 2rem;
     font-weight: 700;
@@ -832,7 +834,7 @@ article.star>div:first-child span:first-child {
     color: var(--accent);
     font-size: 0.85rem;
     padding: 0;
-}
+} */
 
 #feed {
     display: flex;
@@ -919,4 +921,8 @@ main {
     max-width: 1200px;
     margin: 0 auto;
     padding: 2rem 1rem;
+}
+
+#main {
+    display: grid;
 }

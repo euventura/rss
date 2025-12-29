@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Young+Serif&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <title>daily digest</title>
+</head>
+
+<body>
+    <header id="header">
+        <nav>
+            <ul>
+                <li>
+                    <h1><a href="index.html">daily digest</a></h1>
+                </li>
+            </ul>
+        </nav>
+    </header>
+    <div id="main">
+        <article>
+    <a href="/">Voltar</a>
+    <h2> 🐻 Better Admonitions for Bear Blog</h2>
+    <div class="meta">
+        <span class="author">fischr.org</span>
+        <span class="date">23.12.2025 07:23</span>
+
+    </div>
+    <p>I wanted to add nice admonition boxes to my Bear Blog, but pasting <a href="https://thecommabandit.bearblog.dev/cohost-infoboxes/">HTML div structures</a> felt clunky. Even worse, I couldn't use Markdown to add formatting or links to these boxes without resorting to raw HTML, which even more felt like having tag-soup.</p>
+<p>While adding buttons to <a href="/markdown-power-editor-for-bear-blog/">my Markdown toolbar</a> helped automate the process, it still didn't feel like a clean solution. Then I discovered how <a href="https://github.com/orgs/community/discussions/16925">GitHub handles Admonitions</a> using simple Markdown. Since that unfortunately doesn't work in Bear Blog, I hacked together a way to get that same Markdown-first experience.</p>
+<p>I decided to repurpose the lower-level headings inside a blockquote. This keeps the content in pure Markdown while giving the browser enough &quot;hooks&quot; to style them as Info, Warning, or Caution boxes.</p>
+<h2>How it works</h2>
+<p>To use this, just add the H4, H5, or H6 headline inside your blockquote, and you are done. Below you can see, what you need to type and how it is rendered, based on the CSS you find below.</p>
+<pre><code>&gt; #### Did you know?
+&gt; You can find more tips like this in my [archives](/blog/) or by following me on [Mastodon](https://mastodon.social/@fischr).
+</code></pre>
+<blockquote>
+<h4>Did you know?</h4>
+<p>You can find more tips like this in my <a href="/blog/">archives</a> or by following me on <a href="https://mastodon.social/@fischr">Mastodon</a>.</p>
+</blockquote>
+<pre><code>&gt; ##### Spoilers ahead!
+&gt; The following section discusses the ending of the book in great detail. Read at your own risk.
+</code></pre>
+<blockquote>
+<h5>Spoilers ahead!</h5>
+<p>The following section discusses the ending of the book in great detail. Read at your own risk.</p>
+</blockquote>
+<pre><code>&gt; ###### Wait, before you copy-paste...
+&gt; Always make sure to backup your current CSS theme before applying new styles, just in case!
+</code></pre>
+<blockquote>
+<h6>Wait, before you copy-paste...</h6>
+<p>Always make sure to backup your current CSS theme before applying new styles, just in case!</p>
+</blockquote>
+<h2>The CSS</h2>
+<p>Add the following CSS to your Bear Blog theme to transform those headings into beautiful, GitHub-style boxes.</p>
+<pre><code class="language-CSS">/* ==========================================================================
+   GitHub Style Admonitions (Info, Warning and Caution Boxes)
+   ========================================================================== */
+
+blockquote:has(h4), blockquote:has(h5), blockquote:has(h6) {
+    border: none !important;
+    border-left: 3px solid !important;
+    padding: 0 0 0 12px !important;
+    margin: 3rem 0 !important;
+    background-color: transparent !important;
+    border-radius: 0 !important;
+    text-align: left !important;
+    font-family: var(--font-face) !important;
+    font-size: 0.9em !important;
+    line-height: 1.5 !important;
+    max-width: var(--width);
+}
+
+blockquote:has(h4, h5, h6) p {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+blockquote h4, blockquote h5, blockquote h6 {
+    margin: 0 0 4px 0 !important;
+    font-size: 1rem !important;
+    font-family: var(--font-face) !important;
+    text-transform: none !important;
+    font-weight: 700 !important;
+    display: flex;
+    align-items: center;
+}
+
+blockquote h4::before, blockquote h5::before, blockquote h6::before {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+/* Info (H4) */
+blockquote:has(h4) { border-color: #0969da !important; }
+blockquote h4 { color: #0969da !important; }
+blockquote h4::before {
+    content: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%230969da'%3E%3Cpath d='M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z'%3E%3C/path%3E%3C/svg%3E&quot;) / &quot;Info: &quot;;
+}
+
+/* Warning (H5) */
+blockquote:has(h5) { border-color: #9a6700 !important; }
+blockquote h5 { color: #9a6700 !important; }
+blockquote h5::before {
+    content: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%239a6700'%3E%3Cpath d='M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z'%3E%3C/path%3E%3C/svg%3E&quot;) / &quot;Warning: &quot;;
+}
+
+/* Caution (H6) */
+blockquote:has(h6) { border-color: #cf222e !important; }
+blockquote h6 { color: #cf222e !important; }
+blockquote h6::before {
+    content: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23cf222e'%3E%3Cpath d='M4.47.22A.749.749 0 0 1 5 0h6c.199 0 .389.079.53.22l4.25 4.25c.141.14.22.331.22.53v6a.749.749 0 0 1-.22.53l-4.25 4.25A.749.749 0 0 1 11 16H5a.749.749 0 0 1-.53-.22L.22 11.53A.749.749 0 0 1 0 11V5c0-.199.079-.389.22-.53Zm.84 1.28L1.5 5.31v5.38l3.81 3.81h5.38l3.81-3.81V5.31L10.69 1.5ZM8 4a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 4Zm0 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z'%3E%3C/path%3E%3C/svg%3E&quot;) / &quot;Caution: &quot;;
+}
+</code></pre>
+<h2>Why this approach makes sense</h2>
+<p>Yeap, I'm aware that headings have semantic meaning. However, there are several reasons why this is actually a superior solution for a blog:</p>
+<ul>
+<li><p>By using H4-H6, you stay entirely within the Markdown syntax. This allows you to use links, bold text, or even lists inside your boxes, without having to add messy HTML and ending up in even more complex tag-soup.</p>
+</li>
+<li><p>This solution keeps your Markdown source code clean and readable. You don't have to worry about broken HTML tags or complex snippets in your editor. Following the Bear Blog principle, this helps keeping the writing process as simple and clean as possible.</p>
+</li>
+<li><p>This approach is a win for both accessibility and portability. Screen readers and RSS readers often ignore custom CSS and rely purely on HTML structure. By using headings, your admonitions become meaningful &quot;landmarks&quot;. A user can jump directly to a warning in their screen reader, and an RSS subscriber will see a bold, clear headline instead of a flat block of text that lost its styling.</p>
+</li>
+</ul>
+</article>
+    </div>
+    <footer>
+        daily digest by <a href="https://harmonista.org" target="_blank">harmonista ⌐◯ᵔ◯</a>
+    </footer>
+</body>
+
+</html>
