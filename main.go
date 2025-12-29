@@ -45,10 +45,9 @@ var indPath = "/template/index.html"
 var setupOnce sync.Once
 
 func prepareDocs() {
-	_ = os.MkdirAll("./docs", os.ModePerm)
 
+	_ = os.MkdirAll("./docs", os.ModePerm)
 	_ = os.RemoveAll("./docs/y")
-	_ = os.MkdirAll("./docs/y", os.ModePerm)
 
 	entries, err := os.ReadDir("./docs")
 	if err != nil {
@@ -60,13 +59,7 @@ func prepareDocs() {
 		}
 		name := e.Name()
 		if strings.HasSuffix(strings.ToLower(name), ".html") {
-			srcPath := "./docs/" + name
-			dstPath := "./docs/y/" + name
-			b, err := os.ReadFile(srcPath)
-			if err != nil {
-				continue
-			}
-			_ = os.WriteFile(dstPath, b, 0644)
+			os.Remove("./docs" + e.Name())
 		}
 	}
 }
