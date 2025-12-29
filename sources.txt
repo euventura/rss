@@ -11,8 +11,8 @@ https://ambivalentabout.bearblog.dev/rss
 https://valentine.bearblog.dev/rss
 https://www.kylevallans.com/rss
 https://blog.avas.space/rss
-https://blog.armeet.ca/rss*
-https://some---things.com/rss*
+https://blog.armeet.ca/rss
+https://some---things.com/rss
 https://robertbirming.com/rss
 https://blog.metroidcrime.com/rss
 https://theprivacydad.com/rss

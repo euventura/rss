@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"html/template"
 	"net/url"
@@ -127,13 +126,21 @@ func (f *Feed) fetch() {
 		return
 	}
 
-	ch := make(chan string, len(f.Sources))
+	fp := gofeed.NewParser()
+	ch := make(chan string, len(f.Sources)) // Buffer para evitar deadlock
 	wg := sync.WaitGroup{}
 
 	for _, source := range f.Sources {
 		fmt.Println("Start: " + source.URL)
+		fp.UserAgent = "Euventura Rss 0.1"
+		feed, err := fp.ParseURL(source.URL)
+
+		if err != nil {
+			fmt.Println("Erro ao buscar feed:", err)
+			continue
+		}
 		wg.Add(1)
-		go f.process(source, outDir, ch, &wg)
+		go f.process(feed, source.Star, outDir, ch, &wg)
 	}
 
 	go func() {
@@ -152,20 +159,7 @@ func (f *Feed) fetch() {
 	os.WriteFile(outDir+"/index.html", []byte(indTpl), 0644)
 }
 
-func (f *Feed) process(source Source, wPath string, ch chan<- string, wg *sync.WaitGroup) {
-
-	fp := gofeed.NewParser()
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-
-	gof, err := fp.ParseURLWithContext(source.URL, ctx)
-
-	if err != nil {
-		fmt.Println("Erro ao buscar feed:", err)
-		ch <- ""
-		return
-	}
-
+func (f *Feed) process(gof *gofeed.Feed, star bool, wPath string, ch chan<- string, wg *sync.WaitGroup) {
 	var headline string
 	var fiName string
 	defer wg.Done()
@@ -175,10 +169,8 @@ func (f *Feed) process(source Source, wPath string, ch chan<- string, wg *sync.W
 	fmt.Printf("Items: %d", len(gof.Items))
 	for _, item := range gof.Items {
 
-		diff := time.Since(*item.PublishedParsed)
-
-		if diff.Hours() < 48 {
-			ch <- ""
+		diff := time.Since(*item.PublishedParsed).Hours() / 24
+		if diff > 2 {
 			continue
 		}
 
@@ -205,11 +197,13 @@ func (f *Feed) process(source Source, wPath string, ch chan<- string, wg *sync.W
 		}
 
 		words := strings.Fields(desc)
+
 		class := slug.Make(author)
-		url := slug.Make(item.Title) + ".html"
+		back := "/rss/"
+		url := back + slug.Make(item.Title) + ".html"
 
 		data := Entry{
-			Star:        source.Star,
+			Star:        star,
 			Title:       item.Title,
 			Link:        item.Link,
 			Url:         url,
@@ -219,27 +213,23 @@ func (f *Feed) process(source Source, wPath string, ch chan<- string, wg *sync.W
 			Description: strings.Join(words[0:min(38, len(words))], " "),
 			Class:       class,
 			ID:          slug.Make(item.Title),
-			Back:        "/",
+			Back:        back + "index.html",
 		}
 
 		fiName = slug.Make(item.Title) + ".html"
 		article := f.make(data, artPath)
 		article = f.make(Entry{Content: template.HTML(article)}, indPath)
-		// Always write to ./docs per new flow
+
 		err := os.WriteFile("./docs/"+fiName, []byte(article), 0644)
 		if err != nil {
 			fmt.Println("Erro ao escrever arquivo:", err)
-			ch <- ""
 			return
 		}
-		fmt.Println("Written...:", fiName)
+		fmt.Println("Written:", fiName)
 		headline += f.make(data, hePath)
-		fmt.Println("write")
 	}
 
 	ch <- headline
-	fmt.Println("channel fulled")
-	wg.Done()
 }
 
 func (f *Feed) make(data Entry, templatePath string) string {
