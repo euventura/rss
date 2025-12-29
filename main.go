@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"html/template"
 	"net/url"
@@ -154,10 +155,14 @@ func (f *Feed) fetch() {
 func (f *Feed) process(source Source, wPath string, ch chan<- string, wg *sync.WaitGroup) {
 
 	fp := gofeed.NewParser()
-	gof, err := fp.ParseURL(source.URL)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	gof, err := fp.ParseURLWithContext(source.URL, ctx)
 
 	if err != nil {
 		fmt.Println("Erro ao buscar feed:", err)
+		ch <- ""
 		return
 	}
 
@@ -169,6 +174,13 @@ func (f *Feed) process(source Source, wPath string, ch chan<- string, wg *sync.W
 
 	fmt.Printf("Items: %d", len(gof.Items))
 	for _, item := range gof.Items {
+
+		diff := time.Since(*item.PublishedParsed)
+
+		if diff.Hours() < 48 {
+			ch <- ""
+			continue
+		}
 
 		author := item.Authors[0].Name
 
@@ -193,9 +205,7 @@ func (f *Feed) process(source Source, wPath string, ch chan<- string, wg *sync.W
 		}
 
 		words := strings.Fields(desc)
-
 		class := slug.Make(author)
-
 		url := slug.Make(item.Title) + ".html"
 
 		data := Entry{
@@ -219,13 +229,17 @@ func (f *Feed) process(source Source, wPath string, ch chan<- string, wg *sync.W
 		err := os.WriteFile("./docs/"+fiName, []byte(article), 0644)
 		if err != nil {
 			fmt.Println("Erro ao escrever arquivo:", err)
+			ch <- ""
 			return
 		}
-		fmt.Println("Written:", fiName)
+		fmt.Println("Written...:", fiName)
 		headline += f.make(data, hePath)
+		fmt.Println("write")
 	}
 
 	ch <- headline
+	fmt.Println("channel fulled")
+	wg.Done()
 }
 
 func (f *Feed) make(data Entry, templatePath string) string {
