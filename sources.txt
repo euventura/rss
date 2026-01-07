@@ -19,3 +19,5 @@ https://karlitahehe.bearblog.dev/rss
 https://chubsos.bearblog.dev/rss
 https://brnt.sh/too-much/
 https://bearblog.dev/discover/feed/?lang=pt
+https://playtank.io/category/game-design/rss
+https://tiendil.org/en/feeds/atom
